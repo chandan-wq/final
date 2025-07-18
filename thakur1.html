@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learnify Pro - AI Homework Helper</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lottie Player CDN -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --accent-primary: #7c3aed;
+            --accent-secondary: #a78bfa;
+            --card-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        .dark {
+            --text-primary: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #c4b5fd;
+            --card-bg: rgba(26, 26, 46, 0.9);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .active-selection {
+            transform: scale(1.03);
+            box-shadow: 0 0 0 2px var(--accent-primary);
+            background-color: rgba(124, 58, 237, 0.1);
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .disabled-btn {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .ai-helper-bubble {
+            transform: scale(0);
+            transform-origin: bottom right;
+            transition: transform 0.3s ease;
+        }
+
+        .ai-helper-bubble.active {
+            transform: scale(1);
+        }
+
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 50px;
+            height: 30px;
+        }
+
+        .waveform-bar {
+            background-color: var(--accent-primary);
+            width: 3px;
+            border-radius: 3px;
+            animation: waveform-animation 1.5s ease-in-out infinite;
+        }
+
+        @keyframes waveform-animation {
+            0%, 100% { height: 5px; }
+            50% { height: 20px; }
+        }
+
+        .math-equation {
+            background-color: var(--bg-secondary);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-family: "Courier New", monospace;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 640px) {
+            .subject-card {
+                padding: 0.75rem;
+            }
+            
+            .method-card {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .ai-helper-bubble {
+                width: 90%;
+                right: 5%;
+                bottom: 80px;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800 dark:text-gray-100 overflow-x-hidden">
+
+    <!-- Theme Toggle -->
+    <button id="theme-toggle" class="fixed top-4 right-4 z-50 bg-white dark:bg-gray-700 p-2 rounded-full shadow-md">
+        <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+    </button>
+
+    <!-- AI Helper Bubble -->
+    <div id="ai-helper-bubble" class="ai-helper-bubble fixed bottom-20 right-4 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 z-40">
+        <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center">
+                <div class="bg-purple-100 dark:bg-purple-900 p-2 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 dark:text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <span class="font-semibold">Learnify AI</span>
+            </div>
+            <button id="close-helper" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="ai-helper-messages" class="mb-3 max-h-40 overflow-y-auto text-sm">
+            <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-2 mb-1">How can I help with your homework today?</div>
+        </div>
+        <div class="flex">
+            <input id="ai-helper-input" type="text" class="flex-1 border border-gray-300 dark:border-gray-600 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 dark:bg-gray-700" placeholder="Ask me anything...">
+            <button id="ai-helper-send" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-r-lg text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <main class="relative min-h-screen w-full flex items-center justify-center p-4 py-8">
+
+        <!-- Welcome Page -->
+        <section id="welcome-page" class="page w-full max-w-4xl mx-auto text-center">
+            <div class="flex flex-col items-center">
+                <!-- App Branding -->
+                <div class="mb-4">
+                    <h1 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">Learnify Pro</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">By Thakur Digital - Advanced Learning Solutions</p>
+                    <p class="mt-1 text-sm text-purple-500 dark:text-purple-400">"Your 24/7 AI-Powered Study Companion"</p>
+                </div>
+                
+                <!-- Animation -->
+                <div class="w-48 h-48 sm:w-56 sm:h-56">
+                    <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_v92o72md.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                </div>
+
+                <h2 class="text-2xl sm:text-3xl font-bold mt-2">AI Homework Helper</h2>
+                <p class="mt-1 text-gray-600 dark:text-gray-300">Get instant solutions, explanations, and learning resources</p>
+                
+                <!-- Features -->
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full">
+                    <div class="card p-4 text-center">
+                        <div class="text-3xl mb-2">✍️</div>
+                        <h3 class="font-semibold">Text Solver</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Type or paste your questions</p>
+                    </div>
+                    <div class="card p-4 text-center">
+                        <div class="text-3xl mb-2">📷</div>
+                        <h3 class="font-semibold">Image Solver</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Upload problems from photos</p>
+                    </div>
+                    <div class="card p-4 text-center">
+                        <div class="text-3xl mb-2">🎤</div>
+                        <h3 class="font-semibold">Voice Solver</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Ask questions verbally</p>
+                    </div>
+                </div>
+
+                <!-- Additional Features -->
+                <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+                    <div class="card p-3 text-center">
+                        <div class="text-xl mb-1">📝</div>
+                        <h3 class="font-medium text-xs">Step-by-Step</h3>
+                    </div>
+                    <div class="card p-3 text-center">
+                        <div class="text-xl mb-1">📊</div>
+                        <h3 class="font-medium text-xs">Graphs & Charts</h3>
+                    </div>
+                    <div class="card p-3 text-center">
+                        <div class="text-xl mb-1">🧮</div>
+                        <h3 class="font-medium text-xs">Math Equations</h3>
+                    </div>
+                    <div class="card p-3 text-center">
+                        <div class="text-xl mb-1">💾</div>
+                        <h3 class="font-medium text-xs">Save History</h3>
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="mt-8">
+                    <button id="get-started-btn" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium py-2 px-8 rounded-full text-sm shadow-md hover:from-purple-700 hover:to-pink-600 transition-all">
+                        Get Started
+                    </button>
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">No login required</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Subject Selection -->
+        <section id="subject-page" class="page w-full max-w-4xl mx-auto">
+            <header class="text-center mb-6">
+                <h1 class="text-sm text-purple-600 dark:text-purple-400 mb-1">Learnify Pro</h1>
+                <h2 class="text-xl sm:text-2xl font-bold">Choose your Subject</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Select a subject and your class</p>
+            </header>
+
+            <!-- Subjects -->
+            <div id="subject-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div class="subject-card card p-3 flex flex-col items-center justify-center aspect-square cursor-pointer" data-subject="Mathematics">
+                    <span class="text-3xl">🧮</span>
+                    <span class="mt-1 font-medium text-sm">Mathematics</span>
+                </div>
+                <div class="subject-card card p-3 flex flex-col items-center justify-center aspect-square cursor-pointer" data-subject="Science">
+                    <span class="text-3xl">🔬</span>
+                    <span class="mt-1 font-medium text-sm">Science</span>
+                </div>
+                <div class="subject-card card p-3 flex flex-col items-center justify-center aspect-square cursor-pointer" data-subject="English">
+                    <span class="text-3xl">📚</span>
+                    <span class="mt-1 font-medium text-sm">English</span>
+                </div>
+                <div class="subject-card card p-3 flex flex-col items-center justify-center aspect-square cursor-pointer" data-subject="Nepali">
+                    <span class="text-3xl">🇳🇵</span>
+                    <span class="mt-1 font-medium text-sm">Nepali</span>
+                </div>
+                <div class="subject-card card p-3 flex flex-col items-center justify-center aspect-square cursor-pointer" data-subject="Social Studies">
+                    <span class="text-3xl">🌍</span>
+                    <span class="mt-1 font-medium text-sm">Social Studies</span>
+                </div>
+                <div class="subject-card card p-3 flex flex-col items-center justify-center aspect-square cursor-pointer" data-subject="General Knowledge">
+                    <span class="text-3xl">🧠</span>
+                    <span class="mt-1 font-medium text-sm">G.K.</span>
+                </div>
+            </div>
+            
+            <!-- Class Selector -->
+            <div class="mt-6 text-center">
+                <h3 class="text-sm font-medium mb-2">Select Your Class</h3>
+                <div id="class-chips" class="flex flex-wrap justify-center gap-2">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Continue Button -->
+            <div class="mt-8 text-center">
+                <button id="continue-btn" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium py-2 px-6 rounded-full text-sm shadow-md transition-all disabled-btn">
+                    Continue
+                </button>
+            </div>
+        </section>
+
+        <!-- Method Selection -->
+        <section id="method-page" class="page w-full max-w-4xl mx-auto">
+            <header class="relative text-center mb-6">
+                <!-- Back Button -->
+                <button id="back-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 class="text-sm text-purple-600 dark:text-purple-400 mb-1">Learnify Pro</h1>
+                <h2 class="text-xl sm:text-2xl font-bold">How to Solve?</h2>
+                <p id="selection-display" class="text-sm text-gray-600 dark:text-gray-400 mt-1">Class 10 - Mathematics</p>
+            </header>
+
+            <!-- Methods -->
+            <div id="method-cards" class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="method-card card p-4 text-center cursor-pointer" data-method="Text">
+                    <span class="text-4xl">✍️</span>
+                    <h3 class="font-semibold mt-2">Text Input</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Type your question</p>
+                </div>
+                <div class="method-card card p-4 text-center cursor-pointer" data-method="Image">
+                    <span class="text-4xl">📷</span>
+                    <h3 class="font-semibold mt-2">Image Upload</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Upload a picture</p>
+                </div>
+                <div class="method-card card p-4 text-center cursor-pointer" data-method="Voice">
+                    <span class="text-4xl">🎤</span>
+                    <h3 class="font-semibold mt-2">Voice Question</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Speak your question</p>
+                </div>
+            </div>
+
+            <!-- Start Button -->
+            <div class="mt-8 text-center">
+                 <button id="start-btn" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium py-2 px-8 rounded-full text-sm shadow-md hover:from-purple-700 hover:to-pink-600 transition-all disabled-btn">
+                    Select a Method
+                </button>
+            </div>
+        </section>
+        
+        <!-- Question Input -->
+        <section id="question-page" class="page w-full max-w-4xl mx-auto">
+            <header class="relative text-center mb-6">
+                <!-- Back Button -->
+                <button id="back-to-method-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 class="text-sm text-purple-600 dark:text-purple-400 mb-1">Learnify Pro</h1>
+                <h2 class="text-xl sm:text-2xl font-bold">Ask Your Question</h2>
+                <p id="current-method-display" class="text-sm text-gray-600 dark:text-gray-400 mt-1">Method: Text Input</p>
+            </header>
+            
+            <!-- Input Area -->
+            <div class="mt-6">
+                <div id="text-input-container">
+                    <textarea id="question-text" class="w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700" placeholder="Type your question here..."></textarea>
+                    <div class="flex justify-end mt-2">
+                        <button id="math-equation-btn" class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded mr-2">
+                            <i class="fas fa-square-root-alt mr-1"></i>Insert Math Equation
+                        </button>
+                        <button id="clear-text-btn" class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                            <i class="fas fa-trash-alt mr-1"></i>Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="image-input-container" class="hidden">
+                    <div class="card p-4 text-center cursor-pointer border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                        <span class="text-4xl">📁</span>
+                        <h3 class="font-semibold mt-2">Upload Image</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Click to browse or drag & drop</p>
+                        <input type="file" id="image-upload" accept="image/*" class="hidden">
+                        <button id="upload-btn" class="mt-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium py-1 px-4 rounded-full text-xs shadow-md hover:from-purple-700 hover:to-pink-600 transition">
+                            Select Image
+                        </button>
+                    </div>
+                    <div id="image-preview" class="mt-3 hidden">
+                        <img id="preview-img" src="#" alt="Preview" class="max-w-full h-auto rounded-lg mx-auto max-h-40">
+                        <div class="flex justify-center gap-2 mt-2">
+                            <button id="remove-image-btn" class="bg-red-500 text-white font-medium py-1 px-3 rounded-full text-xs shadow hover:bg-red-600 transition">
+                                <i class="fas fa-trash mr-1"></i>Remove
+                            </button>
+                            <button id="retake-image-btn" class="bg-gray-500 text-white font-medium py-1 px-3 rounded-full text-xs shadow hover:bg-gray-600 transition">
+                                <i class="fas fa-camera-retro mr-1"></i>Retake
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="voice-input-container" class="hidden">
+                    <div class="card p-4 text-center">
+                        <span class="text-4xl">🎤</span>
+                        <h3 class="font-semibold mt-2">Voice Question</h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Click below and speak clearly</p>
+                        <button id="record-btn" class="mt-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium py-2 px-6 rounded-full text-xs shadow-md hover:from-purple-700 hover:to-pink-600 transition flex items-center justify-center mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                            Start Recording
+                        </button>
+                        <div id="recording-status" class="mt-3 hidden">
+                            <div class="flex items-center justify-center">
+                                <div class="waveform mr-2">
+                                    <div class="waveform-bar" style="animation-delay: 0s"></div>
+                                    <div class="waveform-bar" style="animation-delay: 0.2s"></div>
+                                    <div class="waveform-bar" style="animation-delay: 0.4s"></div>
+                                    <div class="waveform-bar" style="animation-delay: 0.6s"></div>
+                                    <div class="waveform-bar" style="animation-delay: 0.8s"></div>
+                                </div>
+                                <span class="text-xs">Recording...</span>
+                            </div>
+                            <p id="transcript" class="mt-1 text-xs text-gray-600 dark:text-gray-400"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Options -->
+            <div class="mt-4 card p-3">
+                <h3 class="text-sm font-medium mb-2">Additional Options</h3>
+                <div class="flex flex-wrap gap-2">
+                    <button id="show-example-btn" class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                        <i class="fas fa-lightbulb mr-1"></i>Show Example
+                    </button>
+                    <button id="show-formula-btn" class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                        <i class="fas fa-function mr-1"></i>Show Formula
+                    </button>
+                    <button id="show-diagram-btn" class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                        <i class="fas fa-project-diagram mr-1"></i>Diagram
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="mt-6 text-center">
+                <button id="submit-btn" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium py-2 px-8 rounded-full text-sm shadow-md hover:from-purple-700 hover:to-pink-600 transition disabled-btn">
+                    <i class="fas fa-paper-plane mr-2"></i>Submit Question
+                </button>
+            </div>
+        </section>
+        
+        <!-- Results Page -->
+        <section id="results-page" class="page w-full max-w-4xl mx-auto">
+            <header class="text-center mb-6">
+                <h1 class="text-sm text-purple-600 dark:text-purple-400 mb-1">Learnify Pro</h1>
+                <h2 class="text-xl sm:text-2xl font-bold">Solution</h2>
+                <p id="question-display" class="text-sm text-gray-600 dark:text-gray-400 mt-1"></p>
+            </header>
+            
+            <!-- Loading -->
+            <div id="loading-container" class="mt-8 text-center">
+                <div class="w-20 h-20 mx-auto">
+                    <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_h9kds1my.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                </div>
+                <p class="mt-2 text-sm">Generating solution...</p>
+                <div class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    <p>Analyzing question...</p>
+                    <p class="mt-1">Searching knowledge base...</p>
+                </div>
+            </div>
+            
+            <!-- Results -->
+            <div id="results-container" class="hidden">
+                <!-- Solution Tabs -->
+                <div class="flex border-b border-gray-200 dark:border-gray-700">
+                    <button class="tab-btn py-2 px-4 border-b-2 border-purple-500 font-medium text-sm" data-tab="solution">
+                        Solution
+                    </button>
+                    <button class="tab-btn py-2 px-4 text-gray-500 dark:text-gray-400 font-medium text-sm" data-tab="explanation">
+                        Explanation
+                    </button>
+                    <button class="tab-btn py-2 px-4 text-gray-500 dark:text-gray-400 font-medium text-sm" data-tab="resources">
+                        Resources
+                    </button>
+                </div>
+                
+                <!-- Tab Contents -->
+                <div id="solution-tab" class="tab-content py-4">
+                    <div id="solution-content" class="space-y-4">
+                        <!-- Solution content here -->
+                    </div>
+                </div>
+                
+                <div id="explanation-tab" class="tab-content py-4 hidden">
+                    <div id="explanation-content" class="space-y-3">
+                        <!-- Explanation content here -->
+                    </div>
+                </div>
+                
+                <div id="resources-tab" class="tab-content py-4 hidden">
+                    <div id="resources-content" class="space-y-3">
+                        <!-- Resources content here -->
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button id="new-question-btn" class="card p-3 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <span class="text-xl">🔄</span>
+                        <h3 class="font-medium text-xs mt-1">New Question</h3>
+                    </button>
+                    <button id="save-solution-btn" class="card p-3 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <span class="text-xl">💾</span>
+                        <h3 class="font-medium text-xs mt-1">Save Solution</h3>
+                    </button>
+                    <button id="share-solution-btn" class="card p-3 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <span class="text-xl">📤</span>
+                        <h3 class="font-medium text-xs mt-1">Share</h3>
+                    </button>
+                    <button id="print-solution-btn" class="card p-3 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <span class="text-xl">🖨️</span>
+                        <h3 class="font-medium text-xs mt-1">Print</h3>
+                    </button>
+                </div>
+                
+                <!-- Feedback -->
+                <div class="mt-6 card p-3">
+                    <h3 class="text-sm font-medium mb-2">Was this solution helpful?</h3>
+                    <div class="flex gap-2">
+                        <button class="feedback-btn bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-xs" data-feedback="helpful">
+                            <i class="fas fa-thumbs-up mr-1"></i>Helpful
+                        </button>
+                        <button class="feedback-btn bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-3 py-1 rounded-full text-xs" data-feedback="not-helpful">
+                            <i class="fas fa-thumbs-down mr-1"></i>Not Helpful
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- AI Helper Button -->
+    <button id="ai-helper-btn" class="fixed bottom-4 right-4 bg-gradient-to-r from-purple-600 to-pink-500 h-12 w-12 rounded-full flex items-center justify-center shadow-lg hover:from-purple-700 hover:to-pink-600 transition-transform transform hover:scale-105 z-30">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+    </button>
+
+    <!-- Math Equation Modal -->
+    <div id="math-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold">Insert Math Equation</h3>
+                <button id="close-math-modal" class="text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">+</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">-</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">×</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">÷</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">=</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">√</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">^</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">π</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">(</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">)</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">{</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">}</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">α</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">β</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">θ</button>
+                <button class="math-symbol bg-gray-100 dark:bg-gray-700 p-2 rounded">∞</button>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="math-equation-input" class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700" placeholder="Or type your equation">
+                <button id="insert-math-btn" class="bg-purple-500 text-white px-3 py-2 rounded">Insert</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Configuration - Use environment variables in production!
+    const config = {
+        // In production, these should come from environment variables
+        apiEndpoint: "https://your-backend-api.com/solve", // Replace with your actual backend endpoint
+        apiKey: "", // Should be empty in frontend code - handle authentication differently
+        maxQuestionLength: 1000,
+        maxImageSizeMB: 5,
+        recordingTimeLimit: 60 // seconds
+    };
+
+    // State Management
+    const state = {
+        selectedSubject: null,
+        selectedClass: null,
+        selectedMethod: null,
+        currentQuestion: null,
+        questionImage: null,
+        audioRecorder: null,
+        audioChunks: [],
+        isRecording: false,
+        isDarkMode: false,
+        aiHelperOpen: false,
+        activeTab: 'solution',
+        sessionId: generateSessionId()
+    };
+
+    // DOM Elements
+    const elements = {
+        pages: {
+            welcome: document.getElementById('welcome-page'),
+            subject: document.getElementById('subject-page'),
+            method: document.getElementById('method-page'),
+            question: document.getElementById('question-page'),
+            results: document.getElementById('results-page')
+        },
+        buttons: {
+            getStarted: document.getElementById('get-started-btn'),
+            continue: document.getElementById('continue-btn'),
+            back: document.getElementById('back-btn'),
+            backToMethod: document.getElementById('back-to-method-btn'),
+            start: document.getElementById('start-btn'),
+            submit: document.getElementById('submit-btn'),
+            upload: document.getElementById('upload-btn'),
+            removeImage: document.getElementById('remove-image-btn'),
+            retakeImage: document.getElementById('retake-image-btn'),
+            record: document.getElementById('record-btn'),
+            newQuestion: document.getElementById('new-question-btn'),
+            saveSolution: document.getElementById('save-solution-btn'),
+            shareSolution: document.getElementById('share-solution-btn'),
+            printSolution: document.getElementById('print-solution-btn'),
+            themeToggle: document.getElementById('theme-toggle'),
+            themeIcon: document.getElementById('theme-icon'),
+            aiHelperBtn: document.getElementById('ai-helper-btn'),
+            closeHelper: document.getElementById('close-helper'),
+            aiHelperSend: document.getElementById('ai-helper-send'),
+            clearText: document.getElementById('clear-text-btn'),
+            mathEquation: document.getElementById('math-equation-btn'),
+            showExample: document.getElementById('show-example-btn'),
+            showFormula: document.getElementById('show-formula-btn'),
+            showDiagram: document.getElementById('show-diagram-btn'),
+            closeMathModal: document.getElementById('close-math-modal'),
+            insertMath: document.getElementById('insert-math-btn')
+        },
+        containers: {
+            textInput: document.getElementById('text-input-container'),
+            imageInput: document.getElementById('image-input-container'),
+            voiceInput: document.getElementById('voice-input-container'),
+            imagePreview: document.getElementById('image-preview'),
+            recordingStatus: document.getElementById('recording-status'),
+            loading: document.getElementById('loading-container'),
+            results: document.getElementById('results-container'),
+            aiHelperBubble: document.getElementById('ai-helper-bubble'),
+            aiHelperMessages: document.getElementById('ai-helper-messages'),
+            mathModal: document.getElementById('math-modal')
+        },
+        inputs: {
+            questionText: document.getElementById('question-text'),
+            imageUpload: document.getElementById('image-upload'),
+            previewImg: document.getElementById('preview-img'),
+            transcript: document.getElementById('transcript'),
+            aiHelperInput: document.getElementById('ai-helper-input'),
+            mathEquationInput: document.getElementById('math-equation-input')
+        },
+        displays: {
+            selection: document.getElementById('selection-display'),
+            method: document.getElementById('current-method-display'),
+            question: document.getElementById('question-display'),
+            solution: document.getElementById('solution-content'),
+            explanation: document.getElementById('explanation-content'),
+            resources: document.getElementById('resources-content')
+        },
+        tabs: {
+            solution: document.getElementById('solution-tab'),
+            explanation: document.getElementById('explanation-tab'),
+            resources: document.getElementById('resources-tab')
+        }
+    };
+
+    // Utility Functions
+    function generateSessionId() {
+        return 'session-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg ${
+            type === 'error' ? 'bg-red-500 text-white' : 
+            type === 'success' ? 'bg-green-500 text-white' : 'bg-gray-800 text-white'
+        }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // Initialize App
+    function initialize() {
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            enableDarkMode();
+        } else {
+            disableDarkMode();
+        }
+
+        showPage('welcome');
+        createClassChips();
+        setupEventListeners();
+        updateButtonStates();
+    }
+
+    // Theme Management
+    function enableDarkMode() {
+        document.documentElement.classList.add('dark');
+        state.isDarkMode = true;
+        localStorage.setItem('theme', 'dark');
+        elements.buttons.themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
+    }
+
+    function disableDarkMode() {
+        document.documentElement.classList.remove('dark');
+        state.isDarkMode = false;
+        localStorage.setItem('theme', 'light');
+        elements.buttons.themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />`;
+    }
+
+    function toggleTheme() {
+        if (state.isDarkMode) {
+            disableDarkMode();
+        } else {
+            enableDarkMode();
+        }
+    }
+
+    // AI Helper Functions
+    function toggleAIHelper() {
+        state.aiHelperOpen = !state.aiHelperOpen;
+        if (state.aiHelperOpen) {
+            elements.containers.aiHelperBubble.classList.add('active');
+            elements.inputs.aiHelperInput.focus();
+        } else {
+            elements.containers.aiHelperBubble.classList.remove('active');
+        }
+    }
+
+    function addAIMessage(message, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `rounded-lg p-2 mb-1 text-sm ${isUser ? 'bg-purple-100 dark:bg-purple-900 ml-6' : 'bg-gray-100 dark:bg-gray-700'}`;
+        messageDiv.textContent = message;
+        elements.containers.aiHelperMessages.appendChild(messageDiv);
+        elements.containers.aiHelperMessages.scrollTop = elements.containers.aiHelperMessages.scrollHeight;
+    }
+
+    function handleAIHelperQuery() {
+        const query = elements.inputs.aiHelperInput.value.trim();
+        if (!query) return;
+        
+        if (query.length > config.maxQuestionLength) {
+            showToast(`Please keep questions under ${config.maxQuestionLength} characters`, 'error');
+            return;
+        }
+
+        addAIMessage(query, true);
+        elements.inputs.aiHelperInput.value = '';
+        
+        // In a real implementation, this would call your backend API
+        setTimeout(() => {
+            const responses = {
+                'math': "To solve math problems, first identify what's being asked and the relevant formulas. Break the problem into smaller steps and solve systematically.",
+                'science': "For science questions, focus on understanding the underlying concepts. Relate the question to real-world examples to better grasp the principles.",
+                'english': "When analyzing literature, consider themes, character development, and the author's techniques. Support your points with textual evidence.",
+                'help': "I can help with math problems, science concepts, literature analysis, history questions, and general knowledge. Be specific with your questions!",
+                'default': "I'd be happy to help with that. Could you provide more details about what specifically you're struggling with?"
+            };
+            
+            let response = responses.default;
+            const queryLower = query.toLowerCase();
+            if (queryLower.includes('math')) response = responses.math;
+            else if (queryLower.includes('science')) response = responses.science;
+            else if (queryLower.includes('english') || queryLower.includes('literature')) response = responses.english;
+            else if (queryLower.includes('help')) response = responses.help;
+            
+            addAIMessage(response);
+        }, 1000);
+    }
+
+    // Page Navigation
+    function showPage(pageId) {
+        Object.values(elements.pages).forEach(page => page.style.display = 'none');
+        if (elements.pages[pageId]) {
+            elements.pages[pageId].style.display = 'block';
+        }
+    }
+
+    // Dynamic UI Creation
+    function createClassChips() {
+        const container = document.getElementById('class-chips');
+        container.innerHTML = '';
+        
+        for (let i = 1; i <= 12; i++) {
+            const chip = document.createElement('button');
+            chip.className = 'class-chip bg-gray-100 dark:bg-gray-700 text-sm font-medium py-1 px-3 rounded-full cursor-pointer';
+            chip.textContent = i;
+            chip.dataset.class = i;
+            container.appendChild(chip);
+        }
+    }
+
+    // Event Listeners Setup
+    function setupEventListeners() {
+        // Navigation
+        elements.buttons.getStarted.addEventListener('click', () => showPage('subject'));
+        elements.buttons.continue.addEventListener('click', handleContinue);
+        elements.buttons.back.addEventListener('click', () => showPage('subject'));
+        elements.buttons.backToMethod.addEventListener('click', () => showPage('method'));
+        elements.buttons.start.addEventListener('click', handleStart);
+        elements.buttons.newQuestion.addEventListener('click', () => {
+            resetQuestionState();
+            showPage('method');
+        });
+        
+        // Question Input
+        elements.buttons.submit.addEventListener('click', handleSubmit);
+        elements.buttons.upload.addEventListener('click', () => elements.inputs.imageUpload.click());
+        elements.buttons.removeImage.addEventListener('click', removeImage);
+        elements.buttons.retakeImage.addEventListener('click', () => elements.inputs.imageUpload.click());
+        elements.inputs.imageUpload.addEventListener('change', handleImageUpload);
+        elements.buttons.record.addEventListener('click', toggleRecording);
+        elements.inputs.questionText.addEventListener('input', updateButtonStates);
+        elements.buttons.clearText.addEventListener('click', () => {
+            elements.inputs.questionText.value = '';
+            updateButtonStates();
+        });
+        elements.buttons.mathEquation.addEventListener('click', () => {
+            elements.containers.mathModal.classList.remove('hidden');
+        });
+        elements.buttons.closeMathModal.addEventListener('click', () => {
+            elements.containers.mathModal.classList.add('hidden');
+        });
+        elements.buttons.insertMath.addEventListener('click', insertMathEquation);
+        
+        // Math symbol buttons
+        document.querySelectorAll('.math-symbol').forEach(button => {
+            button.addEventListener('click', () => {
+                elements.inputs.mathEquationInput.value += button.textContent;
+            });
+        });
+        
+        // Selection Cards
+        document.querySelectorAll('.subject-card').forEach(card => {
+            card.addEventListener('click', handleSubjectSelection);
+        });
+        
+        document.querySelectorAll('.method-card').forEach(card => {
+            card.addEventListener('click', handleMethodSelection);
+        });
+        
+        document.querySelectorAll('.class-chip').forEach(chip => {
+            chip.addEventListener('click', handleClassSelection);
+        });
+
+        // Solution Tabs
+        document.querySelectorAll('.tab-btn').forEach(tab => {
+            tab.addEventListener('click', handleTabChange);
+        });
+
+        // Feedback buttons
+        document.querySelectorAll('.feedback-btn').forEach(btn => {
+            btn.addEventListener('click', handleFeedback);
+        });
+
+        // Additional options
+        elements.buttons.showExample.addEventListener('click', showExample);
+        elements.buttons.showFormula.addEventListener('click', showFormula);
+        elements.buttons.showDiagram.addEventListener('click', showDiagram);
+        elements.buttons.saveSolution.addEventListener('click', saveSolution);
+        elements.buttons.shareSolution.addEventListener('click', shareSolution);
+        elements.buttons.printSolution.addEventListener('click', printSolution);
+
+        // Theme Toggle
+        elements.buttons.themeToggle.addEventListener('click', toggleTheme);
+
+        // AI Helper
+        elements.buttons.aiHelperBtn.addEventListener('click', toggleAIHelper);
+        elements.buttons.closeHelper.addEventListener('click', toggleAIHelper);
+        elements.buttons.aiHelperSend.addEventListener('click', handleAIHelperQuery);
+        elements.inputs.aiHelperInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleAIHelperQuery();
+            }
+        });
+
+        // Drag and drop for image upload
+        const dropArea = document.querySelector('#image-input-container .card');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900', 'dark:bg-opacity-20');
+        }
+
+        function unhighlight() {
+            dropArea.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900', 'dark:bg-opacity-20');
+        }
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                elements.inputs.imageUpload.files = files;
+                handleImageUpload({ target: elements.inputs.imageUpload });
+            }
+        }
+    }
+
+    // Event Handlers
+    function handleSubjectSelection(event) {
+        const selectedCard = event.currentTarget;
+        state.selectedSubject = selectedCard.dataset.subject;
+        
+        document.querySelectorAll('.subject-card').forEach(card => card.classList.remove('active-selection'));
+        selectedCard.classList.add('active-selection');
+        
+        updateButtonStates();
+    }
+
+    function handleClassSelection(event) {
+        const selectedChip = event.currentTarget;
+        state.selectedClass = selectedChip.dataset.class;
+        
+        document.querySelectorAll('.class-chip').forEach(chip => chip.classList.remove('active-selection'));
+        selectedChip.classList.add('active-selection');
+        
+        updateButtonStates();
+    }
+
+    function handleContinue() {
+        if (state.selectedSubject && state.selectedClass) {
+            updateSelectionDisplay();
+            showPage('method');
+        }
+    }
+    
+    function handleMethodSelection(event) {
+        const selectedCard = event.currentTarget;
+        state.selectedMethod = selectedCard.dataset.method;
+        
+        document.querySelectorAll('.method-card').forEach(card => card.classList.remove('active-selection'));
+        selectedCard.classList.add('active-selection');
+        
+        updateButtonStates();
+    }
+    
+    function handleStart() {
+        if (state.selectedMethod) {
+            updateMethodDisplay();
+            showQuestionInput();
+            showPage('question');
+        }
+    }
+    
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Validate image size
+        if (file.size > config.maxImageSizeMB * 1024 * 1024) {
+            showToast(`Please upload images smaller than ${config.maxImageSizeMB}MB`, 'error');
+            return;
+        }
+        
+        // Validate image type
+        if (!file.type.match('image.*')) {
+            showToast('Please upload a valid image file', 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            elements.inputs.previewImg.src = e.target.result;
+            elements.containers.imagePreview.classList.remove('hidden');
+            state.questionImage = file;
+            updateButtonStates();
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function removeImage() {
+        elements.inputs.imageUpload.value = '';
+        elements.containers.imagePreview.classList.add('hidden');
+        state.questionImage = null;
+        updateButtonStates();
+    }
+    
+    async function toggleRecording() {
+        if (!state.isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                state.audioRecorder = new MediaRecorder(stream);
+                state.audioChunks = [];
+                
+                state.audioRecorder.ondataavailable = event => {
+                    state.audioChunks.push(event.data);
+                };
+                
+                state.audioRecorder.onstop = async () => {
+                    const audioBlob = new Blob(state.audioChunks, { type: 'audio/wav' });
+                    // In a real app, you would send this to a speech recognition API
+                    simulateSpeechRecognition();
+                };
+                
+                state.audioRecorder.start();
+                state.isRecording = true;
+                elements.buttons.record.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                    </svg>
+                    Stop
+                `;
+                elements.containers.recordingStatus.classList.remove('hidden');
+                
+                // Auto-stop after time limit
+                setTimeout(() => {
+                    if (state.isRecording) {
+                        toggleRecording();
+                    }
+                }, config.recordingTimeLimit * 1000);
+                
+            } catch (error) {
+                console.error('Microphone access error:', error);
+                showToast('Could not access microphone. Please check permissions.', 'error');
+            }
+        } else {
+            state.audioRecorder.stop();
+            state.audioRecorder.stream.getTracks().forEach(track => track.stop());
+            state.isRecording = false;
+            elements.buttons.record.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                Start
+            `;
+        }
+    }
+    
+    async function handleSubmit() {
+        // Validate input based on method
+        if (state.selectedMethod === 'Text' && !elements.inputs.questionText.value.trim()) {
+            showToast('Please enter your question', 'error');
+            return;
+        } else if (state.selectedMethod === 'Image' && !state.questionImage) {
+            showToast('Please upload an image', 'error');
+            return;
+        } else if (state.selectedMethod === 'Voice' && !elements.inputs.transcript.textContent) {
+            showToast('Please record your question', 'error');
+            return;
+        }
+        
+        // Set the current question
+        if (state.selectedMethod === 'Text') {
+            state.currentQuestion = elements.inputs.questionText.value.trim();
+        } else if (state.selectedMethod === 'Image') {
+            state.currentQuestion = "Image question: " + state.questionImage.name;
+        } else if (state.selectedMethod === 'Voice') {
+            state.currentQuestion = elements.inputs.transcript.textContent;
+        }
+        
+        if (state.currentQuestion) {
+            elements.displays.question.textContent = state.currentQuestion;
+            showPage('results');
+            
+            try {
+                // In a real implementation, this would call your backend API
+                // Here we simulate the API call with a timeout
+                const response = await simulateAPICall();
+                displaySolution(response);
+                
+            } catch (error) {
+                console.error("Error processing question:", error);
+                showToast('Error processing your question. Please try again.', 'error');
+                simulateAIProcessing(); // Fallback to simulated response
+            }
+        }
+    }
+    
+    async function simulateAPICall() {
+        // This is where you would make the actual API call to your backend
+        // For demonstration, we return a simulated response after a delay
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve({
+                    success: true,
+                    solution: generateDetailedSolution(),
+                    explanation: generateExplanation(),
+                    resources: generateResources()
+                });
+            }, 2000);
+        });
+    }
+
+    function handleTabChange(event) {
+        const tabId = event.currentTarget.dataset.tab;
+        state.activeTab = tabId;
+        
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(tab => {
+            if (tab.dataset.tab === tabId) {
+                tab.classList.add('border-purple-500', 'text-gray-800', 'dark:text-gray-200');
+                tab.classList.remove('text-gray-500', 'dark:text-gray-400');
+            } else {
+                tab.classList.remove('border-purple-500', 'text-gray-800', 'dark:text-gray-200');
+                tab.classList.add('text-gray-500', 'dark:text-gray-400');
+            }
+        });
+        
+        // Show active tab content
+        Object.values(elements.tabs).forEach(tab => tab.classList.add('hidden'));
+        elements.tabs[tabId].classList.remove('hidden');
+    }
+
+    function handleFeedback(event) {
+        const feedbackType = event.currentTarget.dataset.feedback;
+        const feedbackMessage = document.createElement('div');
+        feedbackMessage.className = 'text-center text-sm text-green-600 dark:text-green-400 mt-2';
+        feedbackMessage.textContent = feedbackType === 'helpful' ? 'Thanks for your feedback!' : 'We\'ll try to improve!';
+        
+        // Remove any existing feedback message
+        const existingFeedback = document.querySelector('.feedback-message');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+        
+        feedbackMessage.classList.add('feedback-message');
+        event.currentTarget.parentNode.appendChild(feedbackMessage);
+        
+        // In a real app, you would send this feedback to your server
+        console.log(`Feedback: ${feedbackType} for question: ${state.currentQuestion}`);
+        
+        // Track feedback in your analytics
+        trackEvent('Feedback', feedbackType, state.selectedSubject);
+    }
+
+    function trackEvent(category, action, label) {
+        // In a real app, you would send this to your analytics platform
+        console.log(`Tracking: ${category} - ${action} - ${label}`);
+    }
+
+    function insertMathEquation() {
+        const equation = elements.inputs.mathEquationInput.value.trim();
+        if (equation) {
+            const cursorPos = elements.inputs.questionText.selectionStart;
+            const textBefore = elements.inputs.questionText.value.substring(0, cursorPos);
+            const textAfter = elements.inputs.questionText.value.substring(cursorPos);
+            
+            elements.inputs.questionText.value = textBefore + ' ' + equation + ' ' + textAfter;
+            elements.inputs.mathEquationInput.value = '';
+            elements.containers.mathModal.classList.add('hidden');
+            updateButtonStates();
+        }
+    }
+
+    function showExample() {
+        const examples = {
+            'Mathematics': "Solve for x: 2x + 5 = 15",
+            'Science': "Explain Newton's Third Law of Motion",
+            'English': "Analyze the theme of Romeo and Juliet",
+            'Nepali': "मुनामदन कविताको विषयवस्तु के हो?",
+            'Social Studies': "What caused the French Revolution?",
+            'General Knowledge': "What are the functions of the United Nations?"
+        };
+        
+        const example = examples[state.selectedSubject] || "Example question about " + state.selectedSubject;
+        
+        if (state.selectedMethod === 'Text') {
+            elements.inputs.questionText.value = example;
+        } else if (state.selectedMethod === 'Voice') {
+            elements.inputs.transcript.textContent = example;
+        }
+        
+        updateButtonStates();
+    }
+
+    function showFormula() {
+        if (state.selectedSubject === 'Mathematics') {
+            const formula = "Quadratic formula: x = [-b ± √(b² - 4ac)] / 2a";
+            showToast(`Common formula: ${formula}`, 'info');
+        } else if (state.selectedSubject === 'Science') {
+            const formula = "Newton's Second Law: F = ma (Force = mass × acceleration)";
+            showToast(`Common formula: ${formula}`, 'info');
+        } else {
+            showToast(`No specific formula for ${state.selectedSubject}. Check the examples for guidance.`, 'info');
+        }
+    }
+
+    function showDiagram() {
+        showToast(`Diagram for ${state.selectedSubject} would be displayed here in a full implementation.`, 'info');
+    }
+
+    function saveSolution() {
+        // In a real app, this would save to a database or local storage
+        showToast('Solution saved to your history!', 'success');
+        trackEvent('Solution', 'Save', state.selectedSubject);
+    }
+
+    function shareSolution() {
+        // In a real app, this would use the Web Share API or social media links
+        if (navigator.share) {
+            navigator.share({
+                title: 'Learnify Pro Solution',
+                text: `Check out this solution for ${state.selectedSubject}`,
+                url: window.location.href
+            }).catch(err => {
+                console.log('Error sharing:', err);
+                showToast('Sharing failed. Please try another method.', 'error');
+            });
+        } else {
+            showToast('Web Share API not supported in your browser', 'info');
+        }
+    }
+
+    function printSolution() {
+        showToast('Print functionality would open print dialog here', 'info');
+        trackEvent('Solution', 'Print', state.selectedSubject);
+    }
+
+    // UI Update Functions
+    function updateButtonStates() {
+        // Continue Button
+        elements.buttons.continue.disabled = !(state.selectedSubject && state.selectedClass);
+        elements.buttons.continue.classList.toggle('disabled-btn', !(state.selectedSubject && state.selectedClass));
+        
+        // Start Button
+        elements.buttons.start.disabled = !state.selectedMethod;
+        elements.buttons.start.classList.toggle('disabled-btn', !state.selectedMethod);
+        elements.buttons.start.textContent = state.selectedMethod ? `Start with ${state.selectedMethod}` : 'Select a Method';
+        
+        // Submit Button
+        let isValid = false;
+        if (state.selectedMethod === 'Text') {
+            isValid = elements.inputs.questionText.value.trim().length > 0;
+        } else if (state.selectedMethod === 'Image') {
+            isValid = state.questionImage !== null;
+        } else if (state.selectedMethod === 'Voice') {
+            isValid = elements.inputs.transcript.textContent.length > 0;
+        }
+        
+        elements.buttons.submit.disabled = !isValid;
+        elements.buttons.submit.classList.toggle('disabled-btn', !isValid);
+    }
+    
+    function updateSelectionDisplay() {
+        if (state.selectedClass && state.selectedSubject) {
+            elements.displays.selection.textContent = `Class ${state.selectedClass} - ${state.selectedSubject}`;
+        }
+    }
+    
+    function updateMethodDisplay() {
+        if (state.selectedMethod) {
+            elements.displays.method.textContent = `Method: ${state.selectedMethod} Input`;
+        }
+    }
+    
+    function showQuestionInput() {
+        elements.containers.textInput.classList.add('hidden');
+        elements.containers.imageInput.classList.add('hidden');
+        elements.containers.voiceInput.classList.add('hidden');
+        
+        if (state.selectedMethod === 'Text') {
+            elements.containers.textInput.classList.remove('hidden');
+        } else if (state.selectedMethod === 'Image') {
+            elements.containers.imageInput.classList.remove('hidden');
+            removeImage();
+        } else if (state.selectedMethod === 'Voice') {
+            elements.containers.voiceInput.classList.remove('hidden');
+            elements.inputs.transcript.textContent = '';
+            elements.containers.recordingStatus.classList.add('hidden');
+        }
+    }
+    
+    function showLoading() {
+        elements.containers.loading.classList.remove('hidden');
+        elements.containers.results.classList.add('hidden');
+    }
+    
+    function showResults() {
+        elements.containers.loading.classList.add('hidden');
+        elements.containers.results.classList.remove('hidden');
+        
+        // Set active tab to solution
+        document.querySelector('.tab-btn[data-tab="solution"]').click();
+    }
+    
+    function displaySolution(apiResponse) {
+        if (!apiResponse.success) {
+            showToast('Error generating solution', 'error');
+            return;
+        }
+        
+        // Update all tab contents
+        elements.displays.solution.innerHTML = apiResponse.solution || generateDetailedSolution();
+        elements.displays.explanation.innerHTML = apiResponse.explanation || generateExplanation();
+        elements.displays.resources.innerHTML = apiResponse.resources || generateResources();
+        
+        showResults();
+        trackEvent('Solution', 'Generated', state.selectedSubject);
+    }
+    
+    function resetQuestionState() {
+        if (state.selectedMethod === 'Text') {
+            elements.inputs.questionText.value = '';
+        } else if (state.selectedMethod === 'Image') {
+            removeImage();
+        } else if (state.selectedMethod === 'Voice') {
+            elements.inputs.transcript.textContent = '';
+        }
+        
+        state.currentQuestion = null;
+        updateButtonStates();
+    }
+
+    // Simulation Functions
+    function simulateAIProcessing() {
+        setTimeout(() => {
+            displaySolution({
+                success: true,
+                solution: generateDetailedSolution(),
+                explanation: generateExplanation(),
+                resources: generateResources()
+            });
+        }, 2000);
+    }
+    
+    function simulateSpeechRecognition() {
+        setTimeout(() => {
+            const questions = {
+                'Mathematics': "How do I solve quadratic equations?",
+                'Science': "Explain Newton's laws of motion",
+                'English': "Analyze the theme of Romeo and Juliet",
+                'Nepali': "मुनामदन कविताको विषयवस्तु के हो?",
+                'Social Studies': "What caused the French Revolution?",
+                'General Knowledge': "What are the functions of the United Nations?"
+            };
+            
+            elements.inputs.transcript.textContent = questions[state.selectedSubject] || "This is a simulated voice question about " + state.selectedSubject;
+            updateButtonStates();
+        }, 1000);
+    }
+    
+    function generateDetailedSolution() {
+        const solutions = {
+            'Mathematics': `
+                <div class="space-y-4">
+                    <div>
+                        <div class="font-medium">Problem:</div>
+                        <p class="math-equation">Solve for x: 2x + 5 = 15</p>
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium">Step-by-Step Solution:</div>
+                        <ol class="list-decimal pl-5 space-y-2">
+                            <li>Subtract 5 from both sides:
+                                <div class="math-equation mt-1">2x + 5 - 5 = 15 - 5</div>
+                                <div class="math-equation mt-1">2x = 10</div>
+                            </li>
+                            <li>Divide both sides by 2:
+                                <div class="math-equation mt-1">2x / 2 = 10 / 2</div>
+                                <div class="math-equation mt-1">x = 5</div>
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div class="bg-green-100 dark:bg-green-900 rounded-lg p-3 mt-3">
+                        <div class="font-medium">Final Answer:</div>
+                        <div class="math-equation mt-1">x = 5</div>
+                    </div>
+                </div>
+            `,
+            'Science': `
+                <div class="space-y-4">
+                    <div>
+                        <div class="font-medium">Question:</div>
+                        <p>Explain Newton's Third Law of Motion</p>
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium">Solution:</div>
+                        <p class="italic">"For every action, there is an equal and opposite reaction."</p>
+                        
+                        <div class="mt-3">
+                            <div class="font-medium">Key Points:</div>
+                            <ul class="list-disc pl-5 space-y-1 mt-1">
+                                <li>Forces always occur in pairs</li>
+                                <li>The two forces are equal in magnitude</li>
+                                <li>The two forces are opposite in direction</li>
+                                <li>Act on different objects</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `,
+            'English': `
+                <div class="space-y-4">
+                    <div>
+                        <div class="font-medium">Question:</div>
+                        <p>Analyze the theme of Romeo and Juliet</p>
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium">Themes:</div>
+                        <div class="grid gap-3 mt-2">
+                            <div class="card p-3">
+                                <div class="font-medium flex items-center">
+                                    <i class="fas fa-heart mr-2 text-red-500"></i>
+                                    The Power of Love
+                                </div>
+                                <p class="text-xs mt-1">The play portrays love as a transformative, overpowering force that supersedes all other values.</p>
+                            </div>
+                            <div class="card p-3">
+                                <div class="font-medium flex items-center">
+                                    <i class="fas fa-dice mr-2 text-blue-500"></i>
+                                    The Inevitability of Fate
+                                </div>
+                                <p class="text-xs mt-1">The characters are aware they are fated to doom, creating dramatic irony.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            'Nepali': `
+                <div class="space-y-4">
+                    <div>
+                        <div class="font-medium">प्रश्न:</div>
+                        <p>मुनामदन कविताको विषयवस्तु विश्लेषण गर्नुहोस्</p>
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium">मुख्य विषयवस्तु:</div>
+                        <ul class="list-disc pl-5 space-y-1 mt-1">
+                            <li>विरहको पीडा</li>
+                            <li>आर्थिक विवशता</li>
+                            <li>नारी जीवनको दु:ख</li>
+                            <li>प्रवासी जीवनको यथार्थ</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            'Social Studies': `
+                <div class="space-y-4">
+                    <div>
+                        <div class="font-medium">Question:</div>
+                        <p>What caused the French Revolution?</p>
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium">Causes:</div>
+                        <ul class="list-disc pl-5 space-y-1 mt-1">
+                            <li>Social inequality (Three Estates system)</li>
+                            <li>Economic crisis and food shortages</li>
+                            <li>Enlightenment ideas challenging monarchy</li>
+                            <li>Poor leadership under Louis XVI</li>
+                            <li>Financial crisis from wars (American Revolution)</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            'General Knowledge': `
+                <div class="space-y-4">
+                    <div>
+                        <div class="font-medium">Question:</div>
+                        <p>What are the functions of the United Nations?</p>
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium">Main Functions:</div>
+                        <ul class="list-disc pl-5 space-y-1 mt-1">
+                            <li>Maintain international peace and security</li>
+                            <li>Develop friendly relations among nations</li>
+                            <li>Promote social progress and human rights</li>
+                            <li>Coordinate humanitarian aid</li>
+                            <li>Be a center for harmonizing nations' actions</li>
+                        </ul>
+                    </div>
+                </div>
+            `
+        };
+        
+        return solutions[state.selectedSubject] || `
+            <div class="space-y-4">
+                <div>
+                    <div class="font-medium">Solution:</div>
+                    <p>Here's the detailed solution to your ${state.selectedSubject} question for class ${state.selectedClass}.</p>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="font-medium">Key Concepts:</div>
+                    <ul class="list-disc pl-5 space-y-1 mt-1">
+                        <li>Understand the core principles involved</li>
+                        <li>Break down the problem into steps</li>
+                        <li>Apply appropriate methods</li>
+                        <li>Verify your solution</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    function generateExplanation() {
+        const explanations = {
+            'Mathematics': `
+                <div class="space-y-3">
+                    <p>This is a basic linear equation. The goal is to isolate the variable x by performing inverse operations on both sides to maintain equality.</p>
+                    
+                    <div class="font-medium mt-3">Why These Steps?</div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>We subtract 5 first to isolate the term with x</li>
+                        <li>Then divide by 2 to solve for x</li>
+                        <li>Always perform the same operation on both sides</li>
+                    </ul>
+                </div>
+            `,
+            'Science': `
+                <div class="space-y-3">
+                    <p>Newton's Third Law explains that forces always come in pairs. When one object exerts a force on a second object, the second object exerts an equal and opposite force on the first.</p>
+                    
+                    <div class="font-medium mt-3">Key Insights:</div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>The action and reaction forces act on different objects</li>
+                        <li>They are simultaneous forces</li>
+                        <li>The forces are equal in magnitude but opposite in direction</li>
+                    </ul>
+                </div>
+            `,
+            'English': `
+                <div class="space-y-3">
+                    <p>The themes in Romeo and Juliet explore the intensity of young love and consequences of societal divisions. Shakespeare presents love as both transformative and destructive.</p>
+                    
+                    <div class="font-medium mt-3">Theme Development:</div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Love vs. Hate - The passionate love contrasts with family feud</li>
+                        <li>Fate vs. Free Will - Characters struggle against predestined paths</li>
+                        <li>Light/Dark Imagery - Represents the duality of love and life</li>
+                    </ul>
+                </div>
+            `,
+            'Nepali': `
+                <div class="space-y-3">
+                    <p>मुनामदन कविताले नेपाली समाजमा प्रचलित गरिबी र विदेश पलायनको यथार्थ चित्रण गरेको छ। यसमा मदनको विदेश जाने विवशता र मुनाको विरह पीडाको मार्मिक चित्रण छ।</p>
+                    
+                    <div class="font-medium mt-3">कविताको संरचना:</div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>लोकगीत शैलीमा रचना</li>
+                        <li>प्रश्नोत्तर शैली</li>
+                        <li>यथार्थवादी चित्रण</li>
+                    </ul>
+                </div>
+            `,
+            'Social Studies': `
+                <div class="space-y-3">
+                    <p>The French Revolution (1789-1799) was a period of radical social and political upheaval in France that had a lasting impact on European history.</p>
+                    
+                    <div class="font-medium mt-3">Long-term Causes:</div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Absolute monarchy and feudal system</li>
+                        <li>Rise of Enlightenment ideas</li>
+                        <li>Economic inequality and taxation issues</li>
+                    </ul>
+                </div>
+            `,
+            'General Knowledge': `
+                <div class="space-y-3">
+                    <p>The United Nations (UN) is an international organization founded in 1945 to promote peace, security, and cooperation among countries.</p>
+                    
+                    <div class="font-medium mt-3">Historical Background:</div>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Founded after WWII to replace the League of Nations</li>
+                        <li>Original 51 member states</li>
+                        <li>Headquarters in New York City</li>
+                    </ul>
+                </div>
+            `
+        };
+        
+        return explanations[state.selectedSubject] || `
+            <div class="space-y-3">
+                <p>This explanation provides deeper insight into the ${state.selectedSubject} question you asked.</p>
+                
+                <div class="font-medium mt-3">Key Concepts:</div>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li>Fundamental principles behind the solution</li>
+                    <li>Historical or theoretical context</li>
+                    <li>Practical applications</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    function generateResources() {
+        const resources = {
+            'Mathematics': `
+                <div class="space-y-3">
+                    <div class="font-medium">Recommended Resources:</div>
+                    
+                    <div class="grid gap-3">
+                        <a href="#" class="card p-3 hover:bg-purple-50 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition">
+                            <div class="font-medium flex items-center">
+                                <i class="fas fa-book mr-2 text-purple-500"></i>
+                                Algebra Fundamentals Textbook
+                            </div>
+                            <p class="text-xs mt-1">Chapter 3: Linear Equations</p>
+                        </a>
+                    </div>
+                </div>
+            `,
+            'Science': `
+                <div class="space-y-3">
+                    <div class="font-medium">Recommended Resources:</div>
+                    
+                    <div class="grid gap-3">
+                        <a href="#" class="card p-3 hover:bg-purple-50 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition">
+                            <div class="font-medium flex items-center">
+                                <i class="fas fa-atom mr-2 text-purple-500"></i>
+                                Newton's Laws - Physics Classroom
+                            </div>
+                            <p class="text-xs mt-1">Interactive tutorial</p>
+                        </a>
+                    </div>
+                </div>
+            `,
+            'English': `
+                <div class="space-y-3">
+                    <div class="font-medium">Recommended Resources:</div>
+                    
+                    <div class="grid gap-3">
+                        <a href="#" class="card p-3 hover:bg-purple-50 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition">
+                            <div class="font-medium flex items-center">
+                                <i class="fas fa-book-open mr-2 text-purple-500"></i>
+                                Romeo and Juliet Full Text
+                            </div>
+                            <p class="text-xs mt-1">With modern translation</p>
+                        </a>
+                    </div>
+                </div>
+            `,
+            'Nepali': `
+                <div class="space-y-3">
+                    <div class="font-medium">सिफारिस गरिएका स्रोतहरू:</div>
+                    
+                    <div class="grid gap-3">
+                        <a href="#" class="card p-3 hover:bg-purple-50 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition">
+                            <div class="font-medium flex items-center">
+                                <i class="fas fa-book mr-2 text-purple-500"></i>
+                                मुनामदन कविता पूर्ण पाठ
+                            </div>
+                            <p class="text-xs mt-1">व्याख्या सहित</p>
+                        </a>
+                    </div>
+                </div>
+            `,
+            'Social Studies': `
+                <div class="space-y-3">
+                    <div class="font-medium">Recommended Resources:</div>
+                    
+                    <div class="grid gap-3">
+                        <a href="#" class="card p-3 hover:bg-purple-50 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition">
+                            <div class="font-medium flex items-center">
+                                <i class="fas fa-landmark mr-2 text-purple-500"></i>
+                                French Revolution Timeline
+                            </div>
+                            <p class="text-xs mt-1">Interactive map and events</p>
+                        </a>
+                    </div>
+                </div>
+            `,
+            'General Knowledge': `
+                <div class="space-y-3">
+                    <div class="font-medium">Recommended Resources:</div>
+                    
+                    <div class="grid gap-3">
+                        <a href="#" class="card p-3 hover:bg-purple-50 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition">
+                            <div class="font-medium flex items-center">
+                                <i class="fas fa-globe mr-2 text-purple-500"></i>
+                                UN Official Website
+                            </div>
+                            <p class="text-xs mt-1">Current initiatives and news</p>
+                        </a>
+                    </div>
+                </div>
+            `
+        };
+        
+        return resources[state.selectedSubject] || `
+            <div class="space-y-3">
+                <div class="font-medium">Recommended Resources:</div>
+                
+                <div class="grid gap-3">
+                    <a href="#" class="card p-3 hover:bg-purple-50 dark:hover:bg-purple-900 dark:hover:bg-opacity-30 transition">
+                        <div class="font-medium flex items-center">
+                            <i class="fas fa-book mr-2 text-purple-500"></i>
+                            ${state.selectedSubject} Textbook
+                        </div>
+                        <p class="text-xs mt-1">Chapter on this topic</p>
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
+    // Start the App
+    initialize();
+});
+</script>
+
+</body>
+</html>why here it doesnot give accurate anwer and real
